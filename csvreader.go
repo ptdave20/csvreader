@@ -33,6 +33,26 @@ var trueValues = []string{
 	"active",
 }
 
+type CSVOptions struct {
+	DefaultInt    int64
+	DefaultUint   uint64
+	DefaultBool   bool
+	DefaultString string
+	TrueValues    []string
+	FalseValues   []string
+}
+
+func DefaultCSVOptions() *CSVOptions {
+	return &CSVOptions{
+		DefaultInt:    0,
+		DefaultUint:   0,
+		DefaultBool:   false,
+		DefaultString: "",
+		TrueValues:    trueValues,
+		FalseValues:   falseValues,
+	}
+}
+
 type CSVHeader []*csvField
 
 func (c CSVHeader) Length() int {
@@ -113,7 +133,10 @@ func GetHeader(row []string, data interface{}) CSVHeader {
 	return header
 }
 
-func UnmarshallRow(header CSVHeader, row []string, data interface{}) error {
+func UnmarshallRow(header CSVHeader, row []string, options *CSVOptions, data interface{}) error {
+	if options == nil {
+		options = DefaultCSVOptions()
+	}
 	v := reflect.ValueOf(data)
 
 	if v.Kind() == reflect.Ptr {
@@ -130,7 +153,7 @@ func UnmarshallRow(header CSVHeader, row []string, data interface{}) error {
 			if len(row[col.rowIndex]) == 0 && col.required {
 				return errors.New(fmt.Sprintf("Column %d is required and does not have a value", col.rowIndex+1))
 			} else if len(row[col.rowIndex]) == 0 && !col.required {
-				field.SetInt(int64(0))
+				field.SetInt(options.DefaultInt)
 				continue
 			}
 			value, err := strconv.Atoi(row[col.rowIndex])
@@ -143,7 +166,7 @@ func UnmarshallRow(header CSVHeader, row []string, data interface{}) error {
 			if len(row[col.rowIndex]) == 0 && col.required {
 				return errors.New(fmt.Sprintf("Column %d is required and does not have a value", col.rowIndex+1))
 			} else if len(row[col.rowIndex]) == 0 && !col.required {
-				field.SetUint(uint64(0))
+				field.SetUint(options.DefaultUint)
 				continue
 			}
 			value, err := strconv.Atoi(row[col.rowIndex])
@@ -155,8 +178,11 @@ func UnmarshallRow(header CSVHeader, row []string, data interface{}) error {
 		case reflect.String:
 			if len(row[col.rowIndex]) == 0 && col.required {
 				return errors.New(fmt.Sprintf("Column %d is required and does not have a value", col.rowIndex+1))
+			} else if len(row[col.rowIndex]) == 0 {
+				field.SetString(options.DefaultString)
+			} else {
+				field.SetString(row[col.rowIndex])
 			}
-			field.SetString(row[col.rowIndex])
 			break
 		case reflect.Bool:
 			if isOneOfValue(row[col.rowIndex], trueValues) {
@@ -166,20 +192,12 @@ func UnmarshallRow(header CSVHeader, row []string, data interface{}) error {
 			} else if col.required {
 				return errors.New(fmt.Sprintf("Failed to parse column %d to an boolean", col.rowIndex+1))
 			} else {
-				field.SetBool(false)
+				field.SetBool(options.DefaultBool)
 			}
 			break
 		}
 	}
 	return nil
-}
-
-func SetTrueValues(values []string) {
-	trueValues = values
-}
-
-func SetFalseValues(values []string) {
-	falseValues = values
 }
 
 func isOneOfValue(value string, comparison []string) bool {

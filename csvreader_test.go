@@ -2,12 +2,12 @@ package csvreader
 
 import "testing"
 
-var valueHeader = []string {
+var valueHeader = []string{
 	"a",
 	"b",
 	"c",
 }
-var valueTest = [][]string {
+var valueTest = [][]string{
 	valueHeader,
 	{
 		"1",
@@ -32,7 +32,7 @@ func TestHeaderA(t *testing.T) {
 		t.Fail()
 	}
 	for i := range csvHeader {
-		if headers:=csvHeader.HeaderValues(i); len(headers) != 1 {
+		if headers := csvHeader.HeaderValues(i); len(headers) != 1 {
 			t.Fail()
 		}
 	}
@@ -44,7 +44,7 @@ func TestUnmarshallA(t *testing.T) {
 		t.Fail()
 	}
 
-	if err := UnmarshallRow(csvHeader, valueTest[1], &s); err != nil {
+	if err := UnmarshallRow(csvHeader, valueTest[1], nil, &s); err != nil {
 		t.Logf("Failed test because: %s", err)
 		t.Fail()
 	}
@@ -62,8 +62,8 @@ func TestUnmarshallA(t *testing.T) {
 
 type headerTestBStruct struct {
 	A string `csv:"a"`
-	B int `csv:"b"`
-	C bool `csv:"c"`
+	B int    `csv:"b"`
+	C bool   `csv:"c"`
 }
 
 func TestUnmarshallB(t *testing.T) {
@@ -73,12 +73,12 @@ func TestUnmarshallB(t *testing.T) {
 		t.Fail()
 	}
 
-	if err := UnmarshallRow(csvHeader, valueTest[1], &s); err != nil {
+	if err := UnmarshallRow(csvHeader, valueTest[1], nil, &s); err != nil {
 		t.Logf("Failed test because: %s", err)
 		t.Fail()
 	}
 
-	if err := UnmarshallRow(csvHeader, valueTest[1], &s); err != nil {
+	if err := UnmarshallRow(csvHeader, valueTest[1], nil, &s); err != nil {
 		t.Logf("Failed test because: %s", err)
 		t.Fail()
 	}
@@ -101,15 +101,15 @@ func BenchmarkReader(b *testing.B) {
 	var data = make([][]string, 100001)
 
 	data[0] = valueHeader
-	for i:=1; i<100001; i++ {
-		data[i] = []string {"c", "123", "true"}
+	for i := 1; i < 100001; i++ {
+		data[i] = []string{"c", "123", "true"}
 	}
 
 	var s headerTestBStruct
 	csvHeader := GetHeader(data[0], s)
 	b.StartTimer()
-	for i:=1; i<100001; i++ {
-		if err := UnmarshallRow(csvHeader, data[i], &s); err != nil {
+	for i := 1; i < 100001; i++ {
+		if err := UnmarshallRow(csvHeader, data[i], nil, &s); err != nil {
 			b.Fail()
 		}
 	}
