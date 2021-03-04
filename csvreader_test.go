@@ -14,6 +14,15 @@ var valueTest = [][]string{
 		"2",
 		"true",
 	},
+	{
+		"1",
+		"2",
+	},
+	{
+		"",
+		"1",
+		"false",
+	},
 }
 
 type headerTestAStruct struct {
@@ -96,6 +105,22 @@ func TestUnmarshallB(t *testing.T) {
 	}
 }
 
+func TestUnmarshallBBlanks(t *testing.T) {
+	var s headerTestBStruct
+	csvHeader := GetHeader(valueTest[0], s)
+	if csvHeader == nil {
+		t.Fail()
+	}
+
+	for i := 1; i < len(valueTest); i++ {
+		if err := UnmarshallRow(csvHeader, valueTest[i], nil, &s); err != nil {
+			t.Logf("Failed test because on row index %d: %s", i, err)
+			t.Fail()
+		}
+		t.Logf("'%s' %d %t", s.A, s.B, s.C)
+	}
+}
+
 func BenchmarkReader(b *testing.B) {
 	// Build data
 	var data = make([][]string, 100001)
@@ -115,4 +140,26 @@ func BenchmarkReader(b *testing.B) {
 	}
 
 	b.StopTimer()
+}
+
+type headerTestCStruct struct {
+	A string `csv:"a"`
+	B int    `csv:"b"`
+	C bool   `csv:"c,required"`
+}
+
+func TestUnmarshallCBlanks(t *testing.T) {
+	var s headerTestCStruct
+	csvHeader := GetHeader(valueTest[0], s)
+	if csvHeader == nil {
+		t.Fail()
+	}
+
+	for i := 1; i < len(valueTest); i++ {
+		if err := UnmarshallRow(csvHeader, valueTest[i], nil, &s); err != nil {
+			t.Logf("Failed test because on row index %d: %s", i, err)
+			t.Fail()
+		}
+		t.Logf("'%s' %d %t", s.A, s.B, s.C)
+	}
 }

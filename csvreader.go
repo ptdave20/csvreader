@@ -150,9 +150,9 @@ func UnmarshallRow(header CSVHeader, row []string, options *CSVOptions, data int
 		field := v.Field(col.fieldIndex)
 		switch col.kind {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			if len(row[col.rowIndex]) == 0 && col.required {
+			if (len(row) <= col.rowIndex || len(row[col.rowIndex]) == 0) && col.required {
 				return errors.New(fmt.Sprintf("Column %d is required and does not have a value", col.rowIndex+1))
-			} else if len(row[col.rowIndex]) == 0 && !col.required {
+			} else if (len(row) <= col.rowIndex || len(row[col.rowIndex]) == 0) && !col.required {
 				field.SetInt(options.DefaultInt)
 				continue
 			}
@@ -163,9 +163,9 @@ func UnmarshallRow(header CSVHeader, row []string, options *CSVOptions, data int
 			field.SetInt(int64(value))
 			break
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			if len(row[col.rowIndex]) == 0 && col.required {
+			if (len(row) <= col.rowIndex || len(row[col.rowIndex]) == 0) && col.required {
 				return errors.New(fmt.Sprintf("Column %d is required and does not have a value", col.rowIndex+1))
-			} else if len(row[col.rowIndex]) == 0 && !col.required {
+			} else if (len(row) <= col.rowIndex || len(row[col.rowIndex]) == 0) && !col.required {
 				field.SetUint(options.DefaultUint)
 				continue
 			}
@@ -176,18 +176,18 @@ func UnmarshallRow(header CSVHeader, row []string, options *CSVOptions, data int
 			field.SetUint(uint64(value))
 			break
 		case reflect.String:
-			if len(row[col.rowIndex]) == 0 && col.required {
+			if (len(row) <= col.rowIndex || len(row[col.rowIndex]) == 0) && col.required {
 				return errors.New(fmt.Sprintf("Column %d is required and does not have a value", col.rowIndex+1))
-			} else if len(row[col.rowIndex]) == 0 {
+			} else if len(row) <= col.rowIndex || len(row[col.rowIndex]) == 0 {
 				field.SetString(options.DefaultString)
 			} else {
 				field.SetString(row[col.rowIndex])
 			}
 			break
 		case reflect.Bool:
-			if isOneOfValue(row[col.rowIndex], trueValues) {
+			if len(row) > col.rowIndex && isOneOfValue(row[col.rowIndex], trueValues) {
 				field.SetBool(true)
-			} else if isOneOfValue(row[col.rowIndex], falseValues) {
+			} else if len(row) > col.rowIndex && isOneOfValue(row[col.rowIndex], falseValues) {
 				field.SetBool(false)
 			} else if col.required {
 				return errors.New(fmt.Sprintf("Failed to parse column %d to an boolean", col.rowIndex+1))
