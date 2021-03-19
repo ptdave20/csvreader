@@ -34,6 +34,7 @@ var trueValues = []string{
 }
 
 type CSVOptions struct {
+	CaseSensitive bool
 	DefaultInt    int64
 	DefaultUint   uint64
 	DefaultBool   bool
@@ -50,6 +51,7 @@ func DefaultCSVOptions() *CSVOptions {
 		DefaultString: "",
 		TrueValues:    trueValues,
 		FalseValues:   falseValues,
+		CaseSensitive: false,
 	}
 }
 
@@ -63,7 +65,7 @@ func (c CSVHeader) HeaderValues(index int) []string {
 	return c[index].headerValues
 }
 
-func GetHeader(row []string, data interface{}) CSVHeader {
+func GetHeader(row []string, data interface{}, options *CSVOptions) CSVHeader {
 	var t reflect.Type
 	v := reflect.ValueOf(data)
 
@@ -122,7 +124,15 @@ func GetHeader(row []string, data interface{}) CSVHeader {
 				break
 			}
 			for rowCol := range row {
-				if newValue.headerValues[headerIndex] == row[rowCol] {
+				var value = row[rowCol]
+				var headerValue = newValue.headerValues[headerIndex]
+
+				if !options.CaseSensitive {
+					value = strings.ToLower(value)
+					headerValue = strings.ToLower(headerValue)
+				}
+
+				if headerValue == value {
 					newValue.rowIndex = rowCol
 					break
 				}
